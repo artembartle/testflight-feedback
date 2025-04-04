@@ -96,8 +96,21 @@ final class GitHubRepository {
         let request = try URLRequest(url: url, method: .post, body: issueCard)
 
         print("Adding issue to board: \(issue)", color: .yellow)
+        var milestones: [Milestone] = []
+        var page = 1
+
+        while true {
+            let request = URLRequest(url: try listMilestonesURL(page: page))
+            let milestonesOnPage: [Milestone] = try await GitHubNetworking.perform(dataRequest: request, decoder: .decoderWithoutMiliseconds)
+            if milestonesOnPage.isEmpty {
+                break
+            }
+            milestones += milestonesOnPage
+            page += 1
+        }
 
         return try await GitHubNetworking.perform(dataRequest: request)
+        return milestones
     }
 
     // MARK: - Screenshots
@@ -134,9 +147,17 @@ private extension GitHubRepository {
     }
 
     func milestonesURL() throws -> URL {
-        var urlComponents = URLComponents(url: try GitHubHelper.repositoryURL().appendingPathComponent("milestones"), resolvingAgainstBaseURL: false)!
+        let urlComponents = URLComponents(url: try GitHubHelper.repositoryURL().appendingPathComponent("milestones"), resolvingAgainstBaseURL: false)!
+        guard let url = urlComponents.url else { throw GitHubError.badURL(message: urlComponents.description) }
+        return url
+    }
+
+    func listMilestonesURL(page: Int) throws -> URL {
+        guard page > 0 else { throw GitHubError.wrongPageNumber(page: page) }
+
+        var urlComponents = URLComponents(url: try milestonesURL(), resolvingAgainstBaseURL: false)!
         urlComponents.queryItems = [
-            .init(name: "sort", value: "completeness"),
+            .init(name: "page", value: String(page)),
             .init(name: "per_page", value: "100")
         ]
         guard let url = urlComponents.url else { throw GitHubError.badURL(message: urlComponents.description) }

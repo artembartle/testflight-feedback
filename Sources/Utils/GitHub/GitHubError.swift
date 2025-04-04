@@ -4,6 +4,7 @@ public enum GitHubError: LocalizedError {
 
     case badCredentials
     case badURL(message: String)
+    case wrongPageNumber(page: Int)
     case unknown(message: String)
 
     init(from message: String) {
@@ -20,6 +21,8 @@ public enum GitHubError: LocalizedError {
             return "Bad credentials"
         case .badURL(let message):
             return "Bad API URL: \(message)"
+        case .wrongPageNumber(let page):
+            return "Wrong page number: \(page). Must be greater than 0."
         case .unknown(let message):
             return message
         }
