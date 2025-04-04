@@ -31,18 +31,12 @@ final class GitHubRepository {
     /// - creates milestone if required, otherwise reuses existing one
     /// - adds screenshots to repository if present
     /// - creates an issue from feedback
-    /// - adds the issue to backlog column
     func setupIssue(feedback: Feedback) async throws {
         let milestone = try await dequeueMilestone(title: feedback.appVersionString)
         let screenshots = try await addScreenshotsToRepository(feedback.screenshotURLs,
                                                                timestamp: feedback.attributes.timestamp)
         let issue = try Issue(from: feedback, milestoneNumber: milestone.number, screenshots: screenshots)
-        let githubIssue = try await createIssue(issue)
-        if let backlogColumnIdString = try? Environment.backlogColumnId.value(),
-           let backlogColumnId = Int(backlogColumnIdString) {
-            let card = try await add(issue: githubIssue, to: backlogColumnId)
-            print("Project card created successfully: \(card)", color: .green)
-        }
+        _ = try await createIssue(issue)
     }
 
     private func createIssue(_ issue: Issue) async throws -> IssueResponseModel {
@@ -83,19 +77,6 @@ final class GitHubRepository {
 
     private func fetchMilestones() async throws -> [Milestone] {
         print("Fetching milestones..", color: .yellow)
-        let request = URLRequest(url: try milestonesURL())
-        return try await GitHubNetworking.perform(dataRequest: request, decoder: .decoderWithoutMiliseconds)
-    }
-
-    // MARK: - Project / Board
-
-    /// [docu](https://developer.github.com/v3/projects/cards/#create-a-project-card)
-    private func add(issue: IssueResponseModel, to columnId: Int) async throws -> ProjectCard {
-        let issueCard = ProjectIssueCard(issueId: issue.id)
-        let url = projectColumnCardURL(columnId: columnId)
-        let request = try URLRequest(url: url, method: .post, body: issueCard)
-
-        print("Adding issue to board: \(issue)", color: .yellow)
         var milestones: [Milestone] = []
         var page = 1
 
@@ -109,7 +90,6 @@ final class GitHubRepository {
             page += 1
         }
 
-        return try await GitHubNetworking.perform(dataRequest: request)
         return milestones
     }
 
