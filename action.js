@@ -1,7 +1,7 @@
 const core = require('./.action/core')
 const exec = require('./.action/exec')
 
-const version = '1.0.4'
+const version = '714a8b3bbbac594d89a4c3154578b18070bf52af'
 
 core.setCommandEcho(true)
 
