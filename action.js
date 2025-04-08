@@ -1,14 +1,14 @@
 const core = require('./.action/core')
 const exec = require('./.action/exec')
 
-const version = '1.0.3'
+const version = '1.0.4'
 
 core.setCommandEcho(true)
 
 async function run() {
     try {
-        const package = 'lukas-ruzicka/testflight-feedback' + '@' + version
-        
+        const package = 'artembartle/testflight-feedback' + '@' + version
+
         // Make sure `Mint` is installed
         if (await isInstalled('mint')) {
             core.info('Mint is already installed.')
@@ -16,7 +16,7 @@ async function run() {
             core.info('Installing mint')
             await exec.exec('brew', ['install', 'mint'])
         }
-        
+
         // Make sure `testflight-feedback` package is installed
         if (await isInstalled('testflight-feedback')) {
             core.info('testflight-feedback is already installed')
@@ -24,7 +24,7 @@ async function run() {
             core.info('Installing testflight-feedback')
             await exec.exec('mint', ['install', package])
         }
-        
+
         let shouldClearScreenshotsOnly = core.getInput('clearScreenshotsOnly', { required: false })
         if (!!shouldClearScreenshotsOnly) {
             // Run `testflight-feedback clear`
